@@ -10,7 +10,7 @@ import gzip
 import time
 from io import BytesIO
 import base64
-import websocket
+import websocket    # library websocket_client: https://github.com/websocket-client/websocket-client
 import mixin_config
 from mixin_api import MIXIN_API
 
@@ -39,6 +39,7 @@ class MIXIN_WS_API:
         if on_data is None:
             on_data = MIXIN_WS_API.__on_data
 
+        # websocket_client: https://github.com/websocket-client/websocket-client
         self.ws = websocket.WebSocketApp("wss://blaze.mixin.one/",
                                     on_message=on_message,
                                     on_error=on_error,

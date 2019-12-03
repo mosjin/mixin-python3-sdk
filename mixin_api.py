@@ -9,17 +9,17 @@ code by lee.c
 update at 2018.12.2
 """
 
+import Crypto       # library: pycryptodome, NOT pycrypto which has security issue.
 from Crypto.PublicKey import RSA
 import base64
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import PKCS1_v1_5
-import Crypto
 import time
 from Crypto import Random
 from Crypto.Cipher import AES
 import hashlib
 import datetime
-import jwt
+import jwt      # library: PyJWT, not jwt.
 import uuid
 import json
 import requests
@@ -119,7 +119,7 @@ class MIXIN_API:
             tsone = (ts %   0x10000) >> 8
             tstwo = (ts %   0x1000000) >> 16
             tsthree = (ts % 0x100000000) >> 24
-            tsfour= (ts %    0x10000000000) >> 32
+            tsfour= (ts %   0x10000000000) >> 32
             tsfive= (ts %   0x10000000000) >> 40
             tssix = (ts %   0x1000000000000) >> 48
             tsseven= (ts %  0x1000000000000) >> 56
@@ -216,7 +216,7 @@ class MIXIN_API:
             body = ""
 
         if auth_token == "":
-            token = self.genGETJwtToken(path, body, str(uuid.uuid4()))
+            token = self.genGETJwtToken(path, body, str( uuid.uuid4() ) )
             auth_token = token.decode('utf8')
 
         r = requests.get(url, headers={"Authorization": "Bearer " + auth_token})
@@ -237,6 +237,7 @@ class MIXIN_API:
         if auth_token == "":
             token = self.genPOSTJwtToken(path, body_in_json, str(uuid.uuid4()))
             auth_token = token.decode('utf8')
+
         headers = {
             'Content-Type'  : 'application/json',
             'Authorization' : 'Bearer ' + auth_token,
@@ -370,6 +371,8 @@ class MIXIN_API:
         old_inside_pay_pin = self.pay_pin
         self.pay_pin = new_pin
         newEncrypedPin = self.genEncrypedPin()
+
+        #??? if THERE should be auth_token = "":, NOT old_pin==""???
         if old_pin == "":
             body = {
                 "old_pin": "",
@@ -522,7 +525,8 @@ class MIXIN_API:
 
 
     """
-    Create a new Mixin Network user (like a normal Mixin Messenger user). You should keep PrivateKey which is used to sign an AuthenticationToken and encrypted PIN for the user.
+    Create a new Mixin Network user (like a normal Mixin Messenger user). 
+    You should keep PrivateKey which is used to sign an AuthenticationToken and encrypted PIN for the user.
     """
     def createUser(self, session_secret, full_name):
 
