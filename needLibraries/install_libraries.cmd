@@ -1,9 +1,12 @@
 
 REM crypt : need Microsoft Visual C++ 14.0, can be installed by Windows_visualCppBuildtools_full.exe
-pip install pycrypt  
+
+REM use pycrytodome, instead of pycrypt.
+pip install pycrytodome
 
 REM JSON Web Token library for Python 3
-pip install jwt
+REM use PyJWT, instead of jwt
+pip install PyJWT
 
 REM Secure hash and message digest algorithm library
 REM hashlib
