@@ -1,0 +1,5 @@
+cryptography==2.8
+pycryptodome==3.9.4
+PyJWT==1.7.1
+requests==2.22.0
+websocket-client==0.53.0

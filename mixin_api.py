@@ -3,10 +3,15 @@
 Mixin API for Python 3.x
 This SDK base on 'https://github.com/myrual/mixin_client_demo/blob/master/mixin_api.py'
 some method note '?', because can't run right result, may be it will be resolved later.
-
+Base on: Base on: https://github.com/includeleec/mixin-python3-sdk,
+Author: leec
 env: python 3.x
-code by lee.c
-update at 2018.12.2
+
+
+Modified by mosjin
+Website: jinLab.com
+mixin: 1051676
+update: 2020-02-14
 """
 
 import Crypto       # library: pycryptodome, NOT pycrypto which has security issue.
@@ -19,23 +24,28 @@ from Crypto import Random
 from Crypto.Cipher import AES
 import hashlib
 import datetime
-import jwt      # library: PyJWT, not jwt.
+import jwt # as pyjwt     # library: PyJWT, not jwt.
+
 import uuid
 import json
 import requests
 from urllib.parse import urlencode
 
+from common_functions import myPrint, get_admin_mixin_id
+
 
 class MIXIN_API:
-    def __init__(self, mixin_config):
+    def __init__(self, robot_config):
 
         # robot's config
-        self.client_id = mixin_config.client_id
-        self.client_secret = mixin_config.client_secret
-        self.pay_session_id = mixin_config.pay_session_id
-        self.pay_pin = mixin_config.pay_pin
-        self.pin_token = mixin_config.pin_token
-        self.private_key = mixin_config.private_key
+        self.client_id = robot_config.client_id
+        self.client_secret = robot_config.client_secret
+        self.pay_session_id = robot_config.pay_session_id
+        self.pay_pin = robot_config.pay_pin
+        self.pin_token = robot_config.pin_token
+        self.private_key = robot_config.private_key
+        self.client_ids_robots = robot_config.client_ids_robots
+        self.developer = get_admin_mixin_id()
 
 
         self.keyForAES = ""
@@ -161,6 +171,31 @@ class MIXIN_API:
     COMMON METHON
     """
 
+    # get mixin href link userd in mixin robot and messenger
+    def getRobotHrefLink( self, robotName ):
+        rbt_cfg = self.getRobotConfig( robotName )
+        if "id" in rbt_cfg:
+            return "mixin://users/{}".format( rbt_cfg[ "id" ] )
+
+        return ""
+
+    def getRobotDesc(self, robotName):
+        rbt_cfg = self.getRobotConfig(robotName)
+        if "name" in rbt_cfg:
+            return rbt_cfg["name"]
+
+        return ""
+
+    def getRobotConfig(self, robotName ):
+        if not robotName:
+            return ""
+
+        if robotName not in self.client_ids_robots:
+            return ""
+
+        # {'name': 'jinLab.com', 'id': 'b5b127c2-72b6-4e92-a7c7-c414d2fa49d0'}
+        return self.client_ids_robots[ robotName ]
+
     """
     generate API url
     """
@@ -177,11 +212,15 @@ class MIXIN_API:
         if auth_token == "":
             r = requests.get(url)
         else:
-            r = requests.get(url, headers={"Authorization": "Bearer " + auth_token})
+            headerJson = { "Authorization": "Bearer " + auth_token, "Content-Type": "application/json" }
+            r = requests.get(url, headers = headerJson  )
 
         result_obj = r.json()
-        print(result_obj)
-        return result_obj['data']
+        myPrint( result_obj )
+        if "data" in result_obj:
+            return result_obj['data']
+        else:
+            return ""
 
     """
     generate POST http request
@@ -197,10 +236,10 @@ class MIXIN_API:
         if auth_token == "":
             r = requests.post(url, json=body_in_json)
         else:
-            r = requests.post(url, json=body_in_json, headers={"Authorization": "Bearer " + auth_token})
+            r = requests.post(url, json=body_in_json, headers={ "Authorization": "Bearer " + auth_token, "Content-Type": "application/json" })
 
         result_obj = r.json()
-        print(result_obj)
+        myPrint(result_obj)
         return result_obj
 
     """
@@ -219,7 +258,7 @@ class MIXIN_API:
             token = self.genGETJwtToken(path, body, str( uuid.uuid4() ) )
             auth_token = token.decode('utf8')
 
-        r = requests.get(url, headers={"Authorization": "Bearer " + auth_token})
+        r = requests.get(url, headers={"Authorization": "Bearer " + auth_token, "Content-Type": "application/json" })
         result_obj = r.json()
         return result_obj
 
@@ -246,12 +285,12 @@ class MIXIN_API:
         url = self.__genUrl(path)
 
         r = requests.post(url, json=body, headers=headers)
-# {'error': {'status': 202, 'code': 20118, 'description': 'Invalid PIN format.'}}
+        # {'error': {'status': 202, 'code': 20118, 'description': 'Invalid PIN format.'}}
 
         # r = requests.post(url, data=body, headers=headers)
-# {'error': {'status': 202, 'code': 401, 'description': 'Unauthorized, maybe invalid token.'}}
+        # {'error': {'status': 202, 'code': 401, 'description': 'Unauthorized, maybe invalid token.'}}
         result_obj = r.json()
-        print(result_obj)
+        myPrint(result_obj)
         return result_obj
 
     """
@@ -406,7 +445,7 @@ class MIXIN_API:
     Grant an asset's deposit address, usually it is public_key, but account_name and account_tag is used for EOS.
     """
     def deposit(self, asset_id):
-        return self.__genNetworkGetRequest(' /assets/' + asset_id)
+        return self.__genNetworkGetRequest('/assets/' + asset_id)
 
 
     """
@@ -444,7 +483,7 @@ class MIXIN_API:
             "account_name": account_name,
             "account_tag": account_tag,
         }
-        print(body)
+        myPrint(body)
         return self.__genNetworkPostRequest('/addresses', body)
 
 
